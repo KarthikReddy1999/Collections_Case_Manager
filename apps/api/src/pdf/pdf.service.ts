@@ -32,7 +32,7 @@ export class PdfService {
             )
             .join('')
         : '<tr><td colspan="4">No actions logged</td></tr>';
-
+// In a real app, you'd want to use a proper templating engine instead of embedding HTML like this, but this keeps dependencies minimal because puppeteer can render raw HTML to PDF without needing a browser context with assets, etc.
       const html = `
       <html>
       <head>
