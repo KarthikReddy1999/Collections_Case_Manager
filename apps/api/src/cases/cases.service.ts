@@ -41,6 +41,11 @@ export class CasesService {
     }
 
     const dpd = this.calculateDpd(loan.dueDate);
+    this.log('info', 'case_create_started', {
+      customerId: dto.customerId,
+      loanId: dto.loanId,
+      dpd,
+    });
 
     const created = await this.prisma.collectionCase.create({
       data: {
@@ -54,6 +59,15 @@ export class CasesService {
         customer: true,
         loan: true,
       },
+    });
+
+    this.log('info', 'case_created', {
+      caseId: created.id,
+      customerId: created.customerId,
+      loanId: created.loanId,
+      stage: created.stage,
+      status: created.status,
+      dpd: created.dpd,
     });
 
     return created;
@@ -173,11 +187,21 @@ export class CasesService {
     });
 
     this.metricsService.incrementActionLogCreated();
+    this.log('info', 'action_log_created', {
+      caseId,
+      actionId: action.id,
+      type: action.type,
+      outcome: action.outcome,
+    });
     return action;
   }
 
   async assignCase(caseId: number, dto: AssignCaseDto = {}) {
     this.metricsService.incrementAssignmentRun();
+    this.log('info', 'assignment_run_started', {
+      caseId,
+      expectedVersion: dto.expectedVersion ?? null,
+    });
 
     try {
       const result = await this.prisma.$transaction(async (tx) => {
@@ -203,6 +227,17 @@ export class CasesService {
           riskScore: caseRecord.customer.riskScore,
           currentStage: caseRecord.stage,
           currentAssignedTo: caseRecord.assignedTo,
+        });
+
+        this.log('info', 'assignment_decision_evaluated', {
+          caseId,
+          currentStage: caseRecord.stage,
+          currentAssignedTo: caseRecord.assignedTo,
+          currentStatus: caseRecord.status,
+          currentVersion: caseRecord.version,
+          nextStage: decision.stage,
+          nextAssignedTo: decision.assignedTo,
+          matchedRules: decision.matchedRules,
         });
 
         const shouldUpdateCase =
@@ -231,6 +266,20 @@ export class CasesService {
           }
 
           version = caseRecord.version + 1;
+          this.log('info', 'assignment_state_updated', {
+            caseId,
+            fromVersion: caseRecord.version,
+            toVersion: version,
+            stage: decision.stage,
+            assignedTo: decision.assignedTo,
+          });
+        } else {
+          this.log('info', 'assignment_state_unchanged', {
+            caseId,
+            version,
+            stage: decision.stage,
+            assignedTo: decision.assignedTo,
+          });
         }
 
         const auditReason = shouldUpdateCase ? decision.reason : `${decision.reason}; no case field changes`;
@@ -255,10 +304,28 @@ export class CasesService {
         };
       });
 
+      this.log('info', 'assignment_run_completed', {
+        caseId,
+        version: result.version,
+        stage: result.stage,
+        assignedTo: result.assignedTo,
+        matchedRules: result.decision.matchedRules,
+      });
       return result;
     } catch (error) {
       if (error instanceof ConflictException) {
         this.metricsService.incrementAssignmentConflict();
+        this.log('warn', 'assignment_conflict', {
+          caseId,
+          expectedVersion: dto.expectedVersion ?? null,
+          message: error.message,
+        });
+      } else {
+        this.log('error', 'assignment_failed', {
+          caseId,
+          expectedVersion: dto.expectedVersion ?? null,
+          message: (error as Error).message ?? 'Unknown error',
+        });
       }
       throw error;
     }
@@ -282,13 +349,23 @@ export class CasesService {
     }
 
     try {
-      return await this.pdfService.generatePaymentNotice({
+      const pdf = await this.pdfService.generatePaymentNotice({
         caseData: caseRecord,
         customer: caseRecord.customer,
         loan: caseRecord.loan,
         lastActions: caseRecord.actionLogs,
       });
+      this.log('info', 'pdf_notice_generated', {
+        caseId,
+        bytes: pdf.length,
+        actionCount: caseRecord.actionLogs.length,
+      });
+      return pdf;
     } catch (error) {
+      this.log('error', 'pdf_notice_generation_failed', {
+        caseId,
+        message: (error as Error).message ?? 'Unknown error',
+      });
       throw new InternalServerErrorException(`Failed to generate PDF: ${(error as Error).message}`);
     }
   }
@@ -316,5 +393,17 @@ export class CasesService {
     }
 
     return CaseStage.SOFT;
+  }
+
+  private log(level: 'info' | 'warn' | 'error', event: string, meta: Record<string, unknown>) {
+    console.log(
+      JSON.stringify({
+        level,
+        event,
+        component: 'CasesService',
+        timestamp: new Date().toISOString(),
+        ...meta,
+      }),
+    );
   }
 }
