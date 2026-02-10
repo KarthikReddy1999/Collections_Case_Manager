@@ -30,7 +30,27 @@ This repository delivers the mandatory assignment scope (case workflow, rules-ba
 ![Swagger metrics endpoint](docs/screenshots/08-metrics-endpoint.png)
 ```bash
 curl http://localhost:3001/api/metrics
+Output:
  "service":"collections-api","timestamp":"2026-02-10T19:16:52.981Z","uptimeSeconds":9569,"http":{"requestsTotal":31,"requestsByStatus":{"200":11,"201":2,"304":18},"requestsByMethodPath":{"GET /api/cases?page=1&pageSize=10":5,"GET /api/cases/kpis":9,"GET /api/cases?page=1&pageSize=10&dpdMin=40":1,"GET /api/cases?page=1&pageSize=10&dpdMin=2":1,"GET /api/cases?page=1&pageSize=10&status=OPEN&stage=HARD":1,"GET /api/cases?page=1&pageSize=10&status=OPEN&stage=SOFT":1,"GET /api/cases/3":1,"GET /api/cases/2":6,"POST /api/cases/2/actions":1,"POST /api/cases/2/assign":1,"GET /api/cases/2/notice.pdf":3,"GET /api/metrics":1}},"business":{"assignmentRunsTotal":1,"assignmentConflictsTotal":0,"actionLogsCreatedTotal":1},"db":{"totalCases":3,"openCases":3,"totalActionLogs":5,"totalRuleDecisions":13}}%
+```
+```bash
+curl -X POST http://localhost:3001/api/cases/3/assign -H 'Content-Type: application/json' -d '{"expectedVersion":0}'
+output:
+"success":false,"error":{"statusCode":409,"message":"Assignment conflict: expectedVersion=0, currentVersion=2","details":null,"path":"/api/cases/3/assign","requestId":"e1a4a674-6dca-4e6c-8c93-40b96ac7948d","timestamp":"2026-02-10T19:22:55.007Z"}}%  
+```
+## Database and Tables:
+```bash
+docker compose exec db psql -U postgres -d collections -c "\dt"
+               List of relations
+ Schema |        Name        | Type  |  Owner   
+--------+--------------------+-------+----------
+ public | _prisma_migrations | table | postgres
+ public | action_logs        | table | postgres
+ public | cases              | table | postgres
+ public | customers          | table | postgres
+ public | loans              | table | postgres
+ public | rule_decisions     | table | postgres
+(6 rows)
 ```
 
 ## What Is Implemented
