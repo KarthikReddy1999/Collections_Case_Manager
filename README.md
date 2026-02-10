@@ -5,6 +5,14 @@ MVP implementation for the senior full-stack take-home assignment.
 ## MVP Scope
 This repository delivers the mandatory assignment scope (case workflow, rules-based assignment with audit trail, dashboard, PDF notice generation, Dockerized run), plus 2 bonus items: optimistic locking/versioning on assignment and a basic metrics endpoint with structured logging.
 
+![Cases Dashboard](docs/screenshots/01-dashboard-cases-list.png)
+![Filtered Cases](docs/screenshots/02-dashboard-filters.png)
+![Case Details](docs/screenshots/03-case-details-1.png)
+![Case Details](docs/screenshots/03-case-details-2.png)
+![Add Action Log](docs/screenshots/04-add-action-log.png)
+![Run Assignment](docs/screenshots/05-run-assignment.png)
+![PDF Notice](docs/screenshots/06-generate-pdf.png)
+
 ## Stack
 - Backend: NestJS + TypeScript
 - Frontend: Next.js (pages router)
@@ -17,6 +25,13 @@ This repository delivers the mandatory assignment scope (case workflow, rules-ba
 - `apps/web`: Next.js dashboard (`/cases`, `/cases/[id]`)
 - `packages/shared`: placeholder workspace package
 - `docker-compose.yml`: one-command local run
+
+![Swagger Documentation](docs/screenshots/07-swagger-docs.png)
+![Swagger metrics endpoint](docs/screenshots/08-metrics-endpoint.png)
+```bash
+curl http://localhost:3001/api/metrics
+ "service":"collections-api","timestamp":"2026-02-10T19:16:52.981Z","uptimeSeconds":9569,"http":{"requestsTotal":31,"requestsByStatus":{"200":11,"201":2,"304":18},"requestsByMethodPath":{"GET /api/cases?page=1&pageSize=10":5,"GET /api/cases/kpis":9,"GET /api/cases?page=1&pageSize=10&dpdMin=40":1,"GET /api/cases?page=1&pageSize=10&dpdMin=2":1,"GET /api/cases?page=1&pageSize=10&status=OPEN&stage=HARD":1,"GET /api/cases?page=1&pageSize=10&status=OPEN&stage=SOFT":1,"GET /api/cases/3":1,"GET /api/cases/2":6,"POST /api/cases/2/actions":1,"POST /api/cases/2/assign":1,"GET /api/cases/2/notice.pdf":3,"GET /api/metrics":1}},"business":{"assignmentRunsTotal":1,"assignmentConflictsTotal":0,"actionLogsCreatedTotal":1},"db":{"totalCases":3,"openCases":3,"totalActionLogs":5,"totalRuleDecisions":13}}%
+```
 
 ## What Is Implemented
 - Case management workflow:
