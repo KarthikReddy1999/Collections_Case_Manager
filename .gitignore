@@ -1,0 +1,11 @@
+node_modules
+npm-debug.log
+.DS_Store
+.env
+.env.*
+!.env.example
+apps/**/.next
+apps/**/dist
+apps/**/node_modules
+apps/**/tsconfig.build.tsbuildinfo
+apps/api/prisma/dev.db

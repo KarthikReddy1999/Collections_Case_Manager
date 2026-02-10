@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum LoanStatus {
+  ACTIVE
+  DELINQUENT
+  CLOSED
+  WRITTEN_OFF
+}
+
+enum CaseStage {
+  SOFT
+  HARD
+  LEGAL
+}
+
+enum CaseStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ActionType {
+  CALL
+  SMS
+  EMAIL
+  WHATSAPP
+}
+
+enum ActionOutcome {
+  NO_ANSWER
+  PROMISE_TO_PAY
+  PAID
+  WRONG_NUMBER
+}
+
+model Customer {
+  id        Int              @id @default(autoincrement())
+  name      String
+  phone     String
+  email     String           @unique
+  country   String
+  riskScore Int
+  loans     Loan[]
+  cases     CollectionCase[]
+
+  @@map("customers")
+}
+
+model Loan {
+  id          Int              @id @default(autoincrement())
+  customerId  Int
+  principal   Decimal          @db.Decimal(14, 2)
+  outstanding Decimal          @db.Decimal(14, 2)
+  dueDate     DateTime
+  status      LoanStatus       @default(ACTIVE)
+  customer    Customer         @relation(fields: [customerId], references: [id])
+  cases       CollectionCase[]
+
+  @@index([customerId])
+  @@map("loans")
+}
+
+model CollectionCase {
+  id            Int            @id @default(autoincrement())
+  customerId    Int
+  loanId        Int
+  dpd           Int
+  version       Int            @default(0)
+  stage         CaseStage      @default(SOFT)
+  status        CaseStatus     @default(OPEN)
+  assignedTo    String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  customer      Customer       @relation(fields: [customerId], references: [id])
+  loan          Loan           @relation(fields: [loanId], references: [id])
+  actionLogs    ActionLog[]
+  ruleDecisions RuleDecision[]
+
+  @@index([status, stage, dpd])
+  @@index([assignedTo])
+  @@index([customerId])
+  @@index([loanId])
+  @@map("cases")
+}
+
+model ActionLog {
+  id        Int           @id @default(autoincrement())
+  caseId    Int
+  type      ActionType
+  outcome   ActionOutcome
+  notes     String
+  createdAt DateTime      @default(now())
+  case      CollectionCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, createdAt])
+  @@map("action_logs")
+}
+
+model RuleDecision {
+  id           Int           @id @default(autoincrement())
+  caseId        Int
+  matchedRules Json
+  reason       String
+  createdAt    DateTime      @default(now())
+  case         CollectionCase @relation(fields: [caseId], references: [id], onDelete: Cascade)
+
+  @@index([caseId, createdAt])
+  @@map("rule_decisions")
+}

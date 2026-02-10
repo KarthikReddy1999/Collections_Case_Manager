@@ -1,0 +1,8 @@
+node_modules
+**/node_modules
+.git
+.gitignore
+apps/**/.next
+apps/**/dist
+apps/**/tsconfig.build.tsbuildinfo
+npm-debug.log

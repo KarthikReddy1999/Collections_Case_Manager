@@ -1,0 +1,22 @@
+[
+  {
+    "name": "DPD_1_7",
+    "when": { "dpd": { "min": 1, "max": 7 } },
+    "then": { "stage": "SOFT", "assignGroup": "Tier1" }
+  },
+  {
+    "name": "DPD_8_30",
+    "when": { "dpd": { "min": 8, "max": 30 } },
+    "then": { "stage": "HARD", "assignGroup": "Tier2" }
+  },
+  {
+    "name": "DPD_GT_30",
+    "when": { "dpd": { "gt": 30 } },
+    "then": { "stage": "LEGAL", "assignGroup": "Legal" }
+  },
+  {
+    "name": "RISK_GT_80_OVERRIDE",
+    "when": { "riskScore": { "gt": 80 } },
+    "then": { "assignedTo": "SeniorAgent", "override": true }
+  }
+]
