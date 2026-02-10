@@ -209,7 +209,7 @@ curl -L http://localhost:3001/api/cases/1/notice.pdf --output notice.pdf
 ```
 
 ## Architecture Decisions / Trade-offs
-- Chose Prisma for faster schema/migration setup and strict typing.
+- Choosen Prisma for faster schema/migration setup and strict typing.
 - Kept rule engine intentionally small and deterministic (JSON-configured, no external DSL/runtime).
 - Added a dedicated KPI endpoint to keep frontend simple and avoid expensive client aggregation.
 - Seed script is idempotent for normal startup: it skips seeding when customer data already exists.
